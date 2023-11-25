@@ -17,6 +17,6 @@ from django.contrib import admin
 from django.urls import URLPattern, URLResolver, include, path
 
 urlpatterns: list[URLResolver | URLPattern] = [
-    path("agent/", include("core.urls")),
+    path("agent/", include("chat.urls")),
     path('admin/', admin.site.urls),
 ]
