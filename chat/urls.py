@@ -3,6 +3,4 @@ from typing import List
 
 from . import views
 
-urlpatterns : List[URLPattern | URLResolver] = [
-    path("", views.index, name="index")
-]
+urlpatterns: List[URLPattern | URLResolver] = [path("", views.index, name="index")]

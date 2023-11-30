@@ -4,27 +4,30 @@ import json
 
 from openai.types.chat import ChatCompletionMessageToolCall
 
+
 class ToolParam(TypedDict):
     type: str
     description: str
+
 
 @dataclass
 class Tool:
     fun: Callable
     description: str
-    params: dict[str,ToolParam]
-
-    
-
-available_tools: dict[str,Tool] = {}
+    params: dict[str, ToolParam] | None
 
 
-def tool(description: str, params: dict[str,ToolParam]):
+available_tools: dict[str, Tool] = {}
+
+
+def tool(description: str, params: dict[str, ToolParam] | None = None):
     def wrapper(fun: Callable):
         new_tool: Tool = Tool(fun, description, params)
         available_tools[fun.__name__] = new_tool
         return fun
+
     return wrapper
+
 
 class ToolManager:
     @staticmethod
@@ -33,18 +36,21 @@ class ToolManager:
         toolname: str
         for toolname in available_tools:
             tool = available_tools[toolname]
-            tools.append({
+            json_tool = {
                 "type": "function",
                 "function": {
                     "name": tool.fun.__name__,
                     "description": tool.description,
                     "parameters": {
                         "type": "object",
-                        "properties": tool.params
+                        "properties": tool.params if tool.params is not None else {},
                     },
                     "required": [name for name in tool.params]
+                    if tool.params is not None
+                    else [],
                 },
-            })
+            }
+            tools.append(json_tool)
         return tools
 
     @staticmethod

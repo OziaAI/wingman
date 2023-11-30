@@ -16,7 +16,7 @@ from django.core.asgi import get_asgi_application
 
 import chat.routing
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'wingman.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "wingman.settings")
 
 django_agsi_app = get_asgi_application()
 
@@ -25,9 +25,7 @@ application = ProtocolTypeRouter(
     {
         "http": django_agsi_app,
         "websocket": OriginValidator(
-            AuthMiddlewareStack(URLRouter(chat.routing.websocket_urlpatterns)),
-            [ "*" ]
-        )
+            AuthMiddlewareStack(URLRouter(chat.routing.websocket_urlpatterns)), ["*"]
+        ),
     }
 )
-
