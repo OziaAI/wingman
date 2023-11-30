@@ -6,17 +6,18 @@ from .agent import GptAgent
 class ChatConsumer(WebsocketConsumer):
     def connect(self) -> None:
         self.accept()
-        self.agent : GptAgent = GptAgent("You are a virtual shopping assistant bot.\
-                                         You can only respond to questions \
-                                         relating to a blue helmet or a red shirt.")
+        self.agent : GptAgent = GptAgent("You are a virtual shopping assistant bot called Wingman."
+            + "You can only respond to questions relating to a blue helmet or a red shirt."
+            + "You can ask the client if he is satisfied and use available tools.")
     
     def disconnect(self, code) -> None:
         pass
 
     def receive(self, text_data):
+        print("Received: " + text_data)
         text_data_json = json.loads(text_data)
         message = text_data_json["message"]
-        answer = self.agent.generate_response(message)
-        print("Received: " + message)
-        print("Answered: " + answer)
-        self.send(text_data=json.dumps({"message": answer}))
+        answer, option = self.agent.generate_response(message)
+        text_data = json.dumps({"message": answer, "option": option})
+        print("Answered: " + text_data)
+        self.send(text_data=text_data)
