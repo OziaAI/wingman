@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +21,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-13@@vmknyedp2!@*an=j8qw#7hjd(v2%+2$d_qw_qqfysv_xz2"
+SECRET_KEY = os.getenv("SECRET_KEY") \
+    or "django-insecure-13@@vmknyedp2!@*an=j8qw#7hjd(v2%+2$d_qw_qqfysv_xz2"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "1") == "1"
 
-ALLOWED_HOSTS = []
+
+HOST = os.getenv("HOST")
+ALLOWED_HOSTS = [] if HOST is None else [HOST]
 
 # Daphne
 ASGI_APPLICATION = "wingman.asgi.application"
@@ -81,11 +85,11 @@ WSGI_APPLICATION = "wingman.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "conversation",
-        "USER": "wingman",
-        "PASSWORD": "test123",
-        "HOST": "127.0.0.1",
-        "PORT": "6666",
+        "NAME": os.getenv("DB_NAME", "conversation"),
+        "USER": os.getenv("DB_USER","wingman"),
+        "PASSWORD": os.getenv("DB_PASSWORD","test123"),
+        "HOST": os.getenv("DB_HOST","127.0.0.1"),
+        "PORT": os.getenv("DB_PORT","6666"),
     }
 }
 

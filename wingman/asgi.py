@@ -21,11 +21,12 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "wingman.settings")
 django_agsi_app = get_asgi_application()
 
 
+ALLOWED_ORIGIN = os.getenv("ALLOWED_ORIGIN", "*")
 application = ProtocolTypeRouter(
     {
         "http": django_agsi_app,
         "websocket": OriginValidator(
-            AuthMiddlewareStack(URLRouter(chat.routing.websocket_urlpatterns)), ["*"]
+            AuthMiddlewareStack(URLRouter(chat.routing.websocket_urlpatterns)), [ALLOWED_ORIGIN]
         ),
     }
 )
