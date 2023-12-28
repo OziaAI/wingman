@@ -26,7 +26,8 @@ application = ProtocolTypeRouter(
     {
         "http": django_agsi_app,
         "websocket": OriginValidator(
-            AuthMiddlewareStack(URLRouter(chat.routing.websocket_urlpatterns)), [ALLOWED_ORIGIN]
+            AuthMiddlewareStack(URLRouter(chat.routing.websocket_urlpatterns)),
+            [ALLOWED_ORIGIN],
         ),
     }
 )
