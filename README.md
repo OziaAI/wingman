@@ -38,3 +38,8 @@ make run;
 You can launch the entire conversation stack in development mode using the
 provided docker-compose file in the conversation repository. This usage
 simplifies the setting of the environment variables needed.
+
+## In production mode
+For the moment, no method other than using the docker compose file in
+conversation repository is available. You will need to deploy Wingman along with
+the entire conversation stack.
