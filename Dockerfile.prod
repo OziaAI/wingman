@@ -12,4 +12,4 @@ RUN poetry config virtualenvs.create false \
 
 EXPOSE 8000
 
-ENTRYPOINT [ "poetry", "run", "uvicorn", "wingman.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT [ "poetry", "run", "uvicorn", "wingman.asgi:application", "--proxy-headers", "--host", "0.0.0.0", "--port", "8000"]
