@@ -64,10 +64,10 @@ class GptAgent:
     )
     def add_option_buttons(
         self,
-        satisfaction_text: str,
-        satisfaction_button: str,
-        dissatisfaction_text: str,
-        dissatisfaction_button: str,
+        satisfaction_text: str = "Yes",
+        satisfaction_button: str = "Yes",
+        dissatisfaction_text: str = "No",
+        dissatisfaction_button: str = "No",
     ):
         self.options = WingmanMessageOption(
             embeddedUrl=None,
