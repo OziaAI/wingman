@@ -1,0 +1,26 @@
+version: "3.9"
+services:
+  wingman:
+    image: "wingman:production"
+    container_name: "wingman-prod"
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    ports:
+      - "6080:8000"
+    environment:
+      - ALLOWED_ORIGIN=${DEPLOY_ALLOWED_ORIGIN}
+      - DEBUG=0
+      - HOST=${DEPLOY_HOST}
+      - DB_NAME=conversation
+      - DB_USER=wingman_service
+      - DB_PASSWORD=${DEPLOY_DB_PASSWORD}
+      - DB_HOST=${DEPLOY_DB_HOST}
+      - DB_PORT=5432
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SECRET_KEY=${DJANGO_SECRET_KEY}
+    networks:
+      - proxynet
+networks:
+  proxynet:
+    name: ozia_backend

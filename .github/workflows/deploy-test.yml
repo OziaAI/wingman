@@ -1,0 +1,29 @@
+name: "Deploy Wingman on test server"
+
+on:
+  push:
+    branches: [ dev ]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: "Publish on the test server"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create a remote docker context
+        uses: arwynfr/actions-docker-context@v2
+        with:
+          docker_host: ${{ secrets.DOCKER_HOST }}
+          context_name: "remote"
+          ssh_cert: ${{ secrets.SSH_CERT }}
+          ssh_key: ${{ secrets.SSH_KEY }}
+      - name: Deploy Wingman on created context
+        env:
+          DEPLOY_ALLOWED_ORIGIN: ${{ secrets.TEST_ALLOWED_ORIGIN }}
+          DEPLOY_HOST: ${{ secrets.TEST_HOST }}
+          DEPLOY_DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
+          DEPLOY_DB_HOST: ${{ secrets.TEST_DB_HOST }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+        run: |
+          docker --context remote compose up --build -d
+
