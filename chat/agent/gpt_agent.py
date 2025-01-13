@@ -29,7 +29,7 @@ class GptAgent:
 
     def create_prompt(self) -> ChatCompletion:
         return self.client.chat.completions.create(
-            model="gpt-3.5-turbo-1106",
+            model="gpt-4o-mini",
             messages=self.chats,
             tools=self.tools,
             tool_choice="auto",
