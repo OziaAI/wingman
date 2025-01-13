@@ -105,6 +105,7 @@ class GptAgent:
         },
     )
     def search_content_in_elastic(self, query: str) -> str:
+        print("Given query: " + query)
         res = self.es_client.search(
             index=self.shop_url, body={"query": json.dumps(query)}
         )
