@@ -25,6 +25,9 @@ jobs:
           DEPLOY_DB_HOST: ${{ secrets.TEST_DB_HOST }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          ES_HOST: ${{ secrets.ES_HOST }}
+          ES_PORT: ${{ secrets.ES_PORT }}
+          ES_API_KEY: ${{ secrets.ES_API_KEY }}
         run: |
           docker --context remote compose up --build -d
 
