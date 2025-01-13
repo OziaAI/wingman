@@ -20,6 +20,7 @@ from .message import (
 from .agent_tools import ToolManager, tool
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -35,12 +36,15 @@ class GptAgent:
         self.tools = ToolManager.list_available_tools()
 
         ES_HOST = os.getenv("ES_HOST", "localhost")
-        ES_PORT = os.getenv("ES_PORT", "9200")
+        ES_PORT = os.getenv("ES_PORT", None)
         ES_API_KEY = os.getenv("ES_API_KEY", None)
 
-        self.es_client = elasticsearch.Elasticsearch(
-            f"http://{ES_HOST}:{ES_PORT}", api_key=ES_API_KEY
-        )
+        if ES_PORT is not None:
+            host = f"http://{ES_HOST}:{ES_PORT}"
+        else:
+            host = f"https://{ES_HOST}"
+
+        self.es_client = elasticsearch.Elasticsearch(host, api_key=ES_API_KEY)
         self.shop_url: str | None = None
         logger.info(self.tools)
 
@@ -98,22 +102,46 @@ class GptAgent:
 
     @tool(
         "Function enabling the assistant to search for items in the elasticsearch database."
-        + "This function shall only be called when the Assistant is required to search for items",
+        + "This function shall only be called when the Assistant is required to search for items."
+        + "keys available per document: title, description and vendor",
         params={
             "query": ToolParam(
                 type="string",
-                description="specifies the query to be searched in the database"
-                + "The query is following the elastic search query syntax",
+                description="specifies the query to be searched in the database in JSON format."
+                + "The query is following the elasticsearch query syntax."
+                + 'An example might be: {"match": {"title": "shoes"}}',
             )
         },
     )
     def search_content_in_elastic(self, query: str) -> str:
-        logger.info("Given query: " + query)
+        body= {"query": json.loads(query)}
+        print(f"body: {body}")
+
         res = self.es_client.search(
-            index=self.shop_url, body={"query": json.dumps(query)}
+            index=self.shop_url, body= body
         )
-        logger.info(res)
-        return json.dumps(res)
+        result = res["hits"]["hits"]
+
+        search_content = {}
+        best_score = 0
+        for r in result:
+            if r["_score"] > best_score:
+                best_score = r["_score"]
+                search_content["title"] = r["_source"]["title"]
+                search_content["description"] = r["_source"]["description"]
+                if self.options is None:
+                    self.options = WingmanMessageOption(
+                        embeddedUrl=None, acceptAction=None, denyAction=None
+                    )
+                self.options["embeddedUrl"] = r["_source"]["image_link"]
+
+        print(search_content)
+        return (
+            "Here is the content returned by the database query."
+            + "Please, write the content as an advertisement for the user."
+            + "If nothing is matching, ONLY TELL the client there is no product matching its requirements, not more not less."
+            + json.dumps(search_content)
+        )
 
     @tool(
         "Disconnects from the user, ending the conversation."
