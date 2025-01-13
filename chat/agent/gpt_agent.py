@@ -19,6 +19,9 @@ from .message import (
 )
 from .agent_tools import ToolManager, tool
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 class GptAgent:
     def __init__(self, behaviour: str):
@@ -39,7 +42,7 @@ class GptAgent:
             f"http://{ES_HOST}:{ES_PORT}", api_key=ES_API_KEY
         )
         self.shop_url: str | None = None
-        print(self.tools)
+        logger.info(self.tools)
 
     def create_prompt(self) -> ChatCompletion:
         return self.client.chat.completions.create(
@@ -105,11 +108,11 @@ class GptAgent:
         },
     )
     def search_content_in_elastic(self, query: str) -> str:
-        print("Given query: " + query)
+        logger.info("Given query: " + query)
         res = self.es_client.search(
             index=self.shop_url, body={"query": json.dumps(query)}
         )
-        print(res)
+        logger.info(res)
         return json.dumps(res)
 
     @tool(
@@ -130,8 +133,8 @@ class GptAgent:
         tool_call: ChatCompletionMessageToolCall
         for tool_call in tool_calls:
             (fun, args) = ToolManager.get_toolkit(tool_call)
-            print("Tool with name: " + fun.__name__ + " has been called")
-            print(args)
+            logger.info("Tool with name: " + fun.__name__ + " has been called")
+            logger.info(args)
             content = fun(self, **args)
 
             msg = {
