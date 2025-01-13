@@ -20,7 +20,8 @@ class ChatConsumer(WebsocketConsumer):
         print("Received: " + text_data)
         text_data_json = json.loads(text_data)
         message = text_data_json["message"]
-        answer = self.agent.generate_response(message)
+        shop_url = text_data_json["shop_url"]
+        answer = self.agent.generate_response(message, shop_url)
         text_data = json.dumps(answer)
         print("Answered: " + text_data)
         self.send(text_data=text_data)

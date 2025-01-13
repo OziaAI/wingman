@@ -4,6 +4,11 @@ from openai.types.chat import (
     ChatCompletionMessageParam,
     ChatCompletionMessageToolCall,
 )
+
+import os
+import json
+import elasticsearch
+
 from chat.agent.agent_tools import ToolParam
 
 from .message import (
@@ -25,6 +30,15 @@ class GptAgent:
         self.options: WingmanMessageOption | None = None
         self.context: WingmanMessageContext = WingmanMessageContext(disconnect=False)
         self.tools = ToolManager.list_available_tools()
+
+        ES_HOST = os.getenv("ES_HOST", "localhost")
+        ES_PORT = os.getenv("ES_PORT", "9200")
+        ES_API_KEY = os.getenv("ES_API_KEY", None)
+
+        self.es_client = elasticsearch.Elasticsearch(
+            f"http://{ES_HOST}:{ES_PORT}", api_key=ES_API_KEY
+        )
+        self.shop_url: str | None = None
         print(self.tools)
 
     def create_prompt(self) -> ChatCompletion:
@@ -80,6 +94,24 @@ class GptAgent:
         )
 
     @tool(
+        "Function enabling the assistant to search for items in the elasticsearch database."
+        + "This function shall only be called when the Assistant is required to search for items",
+        params={
+            "query": ToolParam(
+                type="string",
+                description="specifies the query to be searched in the database"
+                + "The query is following the elastic search query syntax",
+            )
+        },
+    )
+    def search_content_in_elastic(self, query: str) -> str:
+        res = self.es_client.search(
+            index=self.shop_url, body={"query": json.dumps(query)}
+        )
+        print(res)
+        return json.dumps(res)
+
+    @tool(
         "Disconnects from the user, ending the conversation."
         + "You must use this function when you think the conversation should be ended."
         + "You do not have to wait for the user to tell you to stop the conversation."
@@ -99,13 +131,13 @@ class GptAgent:
             (fun, args) = ToolManager.get_toolkit(tool_call)
             print("Tool with name: " + fun.__name__ + " has been called")
             print(args)
-            fun(self, **args)
+            content = fun(self, **args)
 
             msg = {
                 "tool_call_id": tool_call.id,
                 "role": "tool",
                 "name": fun.__name__,
-                "content": "",
+                "content": "" if content is None else content,
             }
             self.chats.append(msg)
 
@@ -113,7 +145,8 @@ class GptAgent:
         self.chats.append(prompt.choices[0].message)
         return prompt.choices[0].message.content
 
-    def generate_response(self, question: str) -> WingmanMessage | None:
+    def generate_response(self, question: str, shop_url: str) -> WingmanMessage | None:
+        self.shop_url = shop_url
         self.chats.append({"role": "user", "content": question})
 
         message = self.create_prompt()
