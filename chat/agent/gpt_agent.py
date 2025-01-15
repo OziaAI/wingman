@@ -8,6 +8,7 @@ from openai.types.chat import (
 import os
 import json
 import elasticsearch
+from sentence_transformers import SentenceTransformer
 
 from chat.agent.agent_tools import ToolParam
 
@@ -45,6 +46,7 @@ class GptAgent:
             host = f"https://{ES_HOST}"
 
         self.es_client = elasticsearch.Elasticsearch(host, api_key=ES_API_KEY)
+        self.model = SentenceTransformer("quora-distilbert-multilingual")
         self.shop_url: str | None = None
         logger.info(self.tools)
 
@@ -102,23 +104,27 @@ class GptAgent:
 
     @tool(
         "Function enabling the assistant to search for items in the elasticsearch database."
-        + "This function shall only be called when the Assistant is required to search for items."
-        + "keys available per document: title, description and vendor",
+        + "This function shall only be called when the Assistant is required to search for items.",
         params={
             "query": ToolParam(
                 type="string",
-                description="specifies the query to be searched in the database in JSON format."
-                + "The query is following the elasticsearch query syntax."
-                + 'An example might be: {"match": {"title": "shoes"}}',
+                description="A summary of the product the user is looking for.",
             )
         },
     )
     def search_content_in_elastic(self, query: str) -> str:
-        body= {"query": json.loads(query)}
-        print(f"body: {body}")
+        print(f"query: {query}")
+
+        embedding = self.model.encode(query, show_progress_bar=False)
 
         res = self.es_client.search(
-            index=self.shop_url, body= body
+            index=self.shop_url,
+            knn={
+                "field": "vector",
+                "query_vector": embedding,
+                "k": 10,
+                "num_candidates": 100,
+            },
         )
         result = res["hits"]["hits"]
 
@@ -139,7 +145,9 @@ class GptAgent:
         return (
             "Here is the content returned by the database query."
             + "Please, write the content as an advertisement for the user."
-            + "If nothing is matching, ONLY TELL the client there is no product matching its requirements, not more not less."
+            + "If nothing is matching, begin your answer by 'sorry' and "
+            + "ONLY TELL the client there is no product matching its "
+            + "requirements, not more not less."
             + json.dumps(search_content)
         )
 
@@ -190,6 +198,9 @@ class GptAgent:
 
         new_answer = self.execute_tool_calls(message.choices[0].message.tool_calls)
         answer = new_answer if new_answer is not None else answer
+
+        if answer.lower().startswith("sorry") and self.options is not None:
+            self.options["embeddedUrl"] = None
 
         # Option reset so that future response generation are not affected by previous option generation
         options = self.options
