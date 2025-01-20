@@ -26,7 +26,14 @@ logger = logging.getLogger(__name__)
 
 
 class GptAgent:
+    """
+    Main class for representing the GPT Agent, supports function tooling and stateful conversation.
+    """
     def __init__(self, behaviour: str):
+        """
+        Constructor for the GPT Agent.
+        @param behaviour: The system prompt for the agent.
+        """
         self.client: OpenAI = OpenAI()
         self.behaviour = behaviour
         self.chats: list[ChatCompletionMessageParam] = [
@@ -163,6 +170,10 @@ class GptAgent:
     def execute_tool_calls(
         self, tool_calls: list[ChatCompletionMessageToolCall] | None
     ) -> str | None:
+        """
+        Executes the tool calls requests coming from the GPT Model.
+        @param tool_calls: The list of tool calls to execute
+        """
         if not tool_calls:
             return None
 
@@ -186,6 +197,12 @@ class GptAgent:
         return prompt.choices[0].message.content
 
     def generate_response(self, question: str, shop_url: str) -> WingmanMessage | None:
+        """
+        Generates a response based on the user's question.
+        @param question: The user's question
+        @param shop_url: The shop URL
+        @return: The response from the agent to the user's question
+        """
         self.shop_url = shop_url
         self.chats.append({"role": "user", "content": question})
 
